@@ -1,5 +1,5 @@
 # Taps
-tap 'munkius/homebrew'
+tap 'munkius/homebrew-munkius'
 
 # Coding
 brew 'rbenv'
