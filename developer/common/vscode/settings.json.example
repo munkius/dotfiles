@@ -13,7 +13,7 @@
   "editor.tabSize": 2,
   "diffEditor.ignoreTrimWhitespace": true,
   "gitlens.keymap": "chorded",
-  "window.zoomLevel": 1,
+  "window.zoomLevel": 0,
   "files.insertFinalNewline": true,
   "gitlens.historyExplorer.enabled": true,
   "emmet.includeLanguages": {

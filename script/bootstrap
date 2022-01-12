@@ -176,25 +176,28 @@ install_homebrew () {
   base/homebrew/install.sh 2>&1
 }
 
-install_homebrew_kegs () {
-  local location=""
+install_and_setup_tool () {
+  local brew_file_location=""
   local role=$1
 
   case "$1" in
     developer/*)
-      location="$1/Brewfile"
+      brew_file_location="$1/Brewfile"
       ;;
     "designer")
-      location="designer/Brewfile"
+      brew_file_location="designer/Brewfile"
       ;;
     *)
-      location="common/Brewfile"
+      brew_file_location="common/Brewfile"
       role="common"
       ;;
   esac
 
   echo "› Installing $role tools"
-  brew bundle --file="$location"
+  if [ -f $brew_file_location ]
+  then
+    brew bundle --file="$brew_file_location"
+  fi
 
   # find the installers and run them iteratively
   find "${role}" -name install.sh -exec sh -c {} \;
@@ -203,7 +206,7 @@ install_homebrew_kegs () {
 install_common_tools () {
   install_dotfiles
   install_homebrew
-  install_homebrew_kegs "common"
+  install_and_setup_tool "common"
   set_default_to_zsh
 }
 
@@ -225,7 +228,7 @@ ask_developer_tools () {
     # Optionally you can pass in a reference to a Brewfile
     if [ ! -z "$2" ]
     then
-      install_homebrew_kegs "developer/$2"
+      install_and_setup_tool "developer/$2"
     fi
 
     # You can also pass in a function reference that must be called
@@ -241,14 +244,11 @@ install_developer_tools () {
   echo
   if [[ $REPLY =~ ^[Yy]$ ]]
   then
-    verify_xcode
-    setup_gitconfig
-    setup_projects_folder
-    install_homebrew_kegs "developer/common"
+    install_and_setup_tool "developer/common"
 
     ask_developer_tools "Elixir" "elixir"
     ask_developer_tools "Javascript" "javascript"
-    ask_developer_tools "Mobile Development" "" setup_fastlane
+    ask_developer_tools "Mobile Development" "mobile_development"
     ask_developer_tools "Ruby" "ruby"
   fi
 }
@@ -258,7 +258,7 @@ install_designer_tools () {
   echo
   if [[ $REPLY =~ ^[Yy]$ ]]
   then
-    install_homebrew_kegs "designer"
+    install_and_setup_tool "designer"
   fi
 }
 
