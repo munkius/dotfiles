@@ -1,26 +1,29 @@
+install_plugin() {
+  local plugin_name=$1 version=$2 repo=$3
 
-install_dart() {
-  echo "› Installing dart..."
-  asdf plugin-add dart https://github.com/patoconnor43/asdf-dart.git
-  asdf install dart 2.15.1
-  asdf global dart 2.15.1
-}
+  if test $(asdf plugin list | grep -Fx "$plugin_name")
+  then
+    read -p "  $plugin_name is already installed. Would you like to update? (Y/N): " -n 1 -r
+    echo
 
-install_flutter() {
-  echo "› Installing flutter..."
-  asdf plugin-add flutter
-  asdf install flutter 2.8.1
-  asdf global flutter 2.8.1
+    if [[ $REPLY =~ ^[Yy]$ ]]
+    then
+      asdf plugin update $plugin_name
+    fi
+  else
+    echo "› Installing $plugin_name..."
+    asdf plugin-add $plugin_name $repo
+    asdf install $plugin_name $version
+    asdf global $plugin_name $version
+  fi
 }
 
 install_cocoapods() {
   echo "› Installing cocoapods..."
-  asdf plugin-add ruby https://github.com/asdf-vm/asdf-ruby.git
-  asdf install ruby 3.1.0
-  asdf global ruby 3.1.0
   gem install cocoapods
 }
 
-install_dart
-install_flutter
+install_plugin "dart" "2.15.1" "https://github.com/patoconnor43/asdf-dart.git"
+install_plugin "flutter" "2.8.1"
+install_plugin "ruby" "3.1.0" "https://github.com/asdf-vm/asdf-ruby.git"
 install_cocoapods

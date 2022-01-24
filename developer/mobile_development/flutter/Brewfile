@@ -1,3 +1,4 @@
 cask 'android-sdk'
 cask 'android-studio'
 cask 'temurin'
+brew 'fastlane'
