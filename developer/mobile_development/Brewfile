@@ -2,4 +2,6 @@ brew 'fastlane'
 
 cask 'android-sdk'
 cask 'android-studio'
-cask 'temurin'
+
+tap 'homebrew/cask-versions'
+cask 'temurin11'
