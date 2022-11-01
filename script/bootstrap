@@ -246,6 +246,7 @@ install_developer_tools () {
   then
     install_and_setup_tool "developer/common"
 
+    ask_developer_tools "C64" "c64"
     ask_developer_tools "Elixir" "elixir"
     ask_developer_tools "Javascript" "javascript"
     ask_developer_tools "Mobile Development" "mobile_development"
