@@ -263,7 +263,11 @@ install_designer_tools () {
   fi
 }
 
+verify_xcode
 install_common_tools
+
+setup_gitconfig
+setup_projects_folder
 install_developer_tools
 install_designer_tools
 

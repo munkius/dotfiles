@@ -9,20 +9,9 @@ function install_extensions() {
   if [[ $REPLY =~ ^[Yy]$ ]]
   then
     local extensions=(
-      "karunamurti.haml"
-      "streetsidesoftware.code-spell-checker"
-      "mikestead.dotenv"
-      "eamodio.gitlens"
-      "pkief.material-icon-theme"
-      "ionutvmi.path-autocomplete"
-      "dbaeumer.vscode-eslint"
-      "hookyqr.beautify"
-      "mohsen1.prettify-json"
-      "noku.rails-run-spec-vscode"
-      "rebornix.ruby"
-      "hridoy.rails-snippets"
-      "misogi.ruby-rubocop"
-      "wayou.vscode-todo-highlight"
+      "dart-code.flutter"
+      "dart-code.dart-code"
+      "kaiqun.build-runner"
     )
 
     for extension in "${extensions[@]}"

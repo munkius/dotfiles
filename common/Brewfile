@@ -2,6 +2,20 @@ brew 'zsh'
 
 cask '1password'
 cask 'alfred'
+cask 'brave-browser'
+cask 'clockify'
 cask 'dropbox'
+cask 'evernote'
+cask 'fujitsu-scansnap-home'
+cask 'gimp'
+cask 'miro'
+cask 'nordvpn'
+cask 'notion'
+cask 'readdle-spark'
+cask 'signal'
 cask 'spectacle'
 cask 'spotify'
+cask 'telegram'
+
+# Not installable through brew:
+# craft

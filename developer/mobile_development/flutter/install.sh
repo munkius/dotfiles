@@ -23,7 +23,6 @@ install_cocoapods() {
   gem install cocoapods
 }
 
-install_plugin "dart" "2.15.1" "https://github.com/patoconnor43/asdf-dart.git"
-install_plugin "flutter" "2.8.1"
-install_plugin "ruby" "3.1.0" "https://github.com/asdf-vm/asdf-ruby.git"
+install_plugin "flutter" "latest"
+install_plugin "ruby" "latest" "https://github.com/asdf-vm/asdf-ruby.git"
 install_cocoapods
