@@ -1,4 +1,4 @@
-# Heavily inspired by https://github.com/mathiasbynens/dotfiles/blob/master/.macos
+# # Heavily inspired by https://github.com/mathiasbynens/dotfiles/blob/master/.macos
 
 echo "› Setting up Mac defaults"
 
@@ -29,9 +29,16 @@ defaults write -g InitialKeyRepeat -int 15
 defaults write -g KeyRepeat -int 2
 
 # Trackpad: enable tap to click for this user and for the login screen
-defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
-defaults -currentHost write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
-defaults write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
+defaults write com.apple.AppleMultitouchTrackpad Clicking -bool true
+sudo defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
+sudo defaults -currentHost write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
+sudo defaults write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
+
+# Trackpad: enable double tap to drag
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Dragging -int 1
+defaults write com.apple.AppleMultitouchTrackpad Dragging -int 1
+
+echo "Be sure to restart your Mac for the trackpad changed to take effect"
 
 ###############################################################################
 # Dock, Dashboard, and hot corners                                            #

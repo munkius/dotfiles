@@ -24,7 +24,7 @@ brew 'asdf'
 
 # Cask
 # cask 'docker'
-# cask 'iterm2'
+cask 'iterm2'
 # cask 'postman'
 # cask 'rowanj-gitx'
 cask 'visual-studio-code'
