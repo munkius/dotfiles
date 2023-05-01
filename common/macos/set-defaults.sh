@@ -41,6 +41,12 @@ defaults write com.apple.AppleMultitouchTrackpad Dragging -int 1
 echo "Be sure to restart your Mac for the trackpad changed to take effect"
 
 ###############################################################################
+# Finder                                                                      #
+###############################################################################
+# Set column view
+defaults write com.apple.finder "FXPreferredViewStyle" -string "clmv" && killall Finder
+
+###############################################################################
 # Dock, Dashboard, and hot corners                                            #
 ###############################################################################
 
