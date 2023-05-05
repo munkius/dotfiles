@@ -86,3 +86,9 @@ defaults write com.apple.dock autohide -bool true
 # Run the screensaver if we're in the bottom-left hot corner.
 defaults write com.apple.dock wvous-bl-corner -int 5
 defaults write com.apple.dock wvous-bl-modifier -int 0
+
+# Do not keep recently opened apps in the dock
+defaults write com.apple.dock show-recents -int 0
+
+# Restart the dock
+killall Dock
