@@ -1,5 +1,4 @@
 brew 'zsh'
-brew 'wrk-trello'
 
 cask '1password'
 cask 'alfred'
@@ -21,4 +20,3 @@ cask 'telegram'
 
 # Not installable through brew:
 # craft
-# spark mail
