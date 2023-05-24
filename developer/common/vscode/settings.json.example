@@ -1,19 +1,7 @@
 {
-  "gitlens.advanced.messages": {
-    "suppressCommitHasNoPreviousCommitWarning": false,
-    "suppressCommitNotFoundWarning": false,
-    "suppressFileNotUnderSourceControlWarning": false,
-    "suppressGitVersionWarning": false,
-    "suppressLineUncommittedWarning": false,
-    "suppressNoRepositoryWarning": false,
-    "suppressResultsExplorerNotice": true,
-    "suppressShowKeyBindingsNotice": true
-  },
   "editor.minimap.enabled": false,
   "editor.tabSize": 2,
   "diffEditor.ignoreTrimWhitespace": true,
-  "gitlens.keymap": "chorded",
-  "window.zoomLevel": 0,
   "files.insertFinalNewline": true,
   "gitlens.historyExplorer.enabled": true,
   "emmet.includeLanguages": {
@@ -22,10 +10,11 @@
     "plaintext": "jade"
   },
   "javascript.updateImportsOnFileMove.enabled": "always",
-  "workbench.iconTheme": "material-icon-theme",
   "editor.formatOnSave": true,
   "breadcrumbs.enabled": true,
   "explorer.confirmDragAndDrop": false,
   "git.autofetch": true,
-  "files.trimTrailingWhitespace": true
+  "files.trimTrailingWhitespace": true,
+  "explorer.confirmDelete": false,
+  "dart.lineLength": 120
 }
