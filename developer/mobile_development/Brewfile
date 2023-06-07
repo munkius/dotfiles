@@ -1,5 +1,6 @@
 brew 'jq'
 brew 'fastlane'
+brew 'firebase-cli'
 
 cask 'android-sdk'
 cask 'android-studio'
