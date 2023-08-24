@@ -23,6 +23,16 @@ install_cocoapods() {
   gem install cocoapods
 }
 
+link_android_studio_java() {
+  local my_link="/Library/Java/JavaVirtualMachines/android-studio-jree"
+  if [ ! -L ${my_link} ] || [ ! -e ${my_link} ]
+  then
+    echo "› Linking JDK from Android Studio..."
+    sudo ln -s "/Applications/Android Studio.app/Contents/jbr" ${my_link}
+  fi
+}
+
 install_plugin "flutter" "latest"
 install_plugin "ruby" "latest" "https://github.com/asdf-vm/asdf-ruby.git"
 install_cocoapods
+link_android_studio_java
