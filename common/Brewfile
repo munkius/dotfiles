@@ -15,7 +15,7 @@ cask 'nordvpn'
 cask 'notion'
 cask 'readdle-spark'
 cask 'signal'
-cask 'spectacle'
+cask 'rectangle'
 cask 'spotify'
 cask 'telegram'
 
