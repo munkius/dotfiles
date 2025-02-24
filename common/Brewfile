@@ -18,6 +18,7 @@ cask 'readdle-spark'
 cask 'signal'
 cask 'rectangle'
 cask 'spotify'
+cask 'superwhisper'
 cask 'telegram'
 
 # Not installable through brew:
