@@ -1,1 +1,1 @@
-source $(brew --prefix asdf)/libexec/asdf.sh
+source $(brew --prefix asdf)/etc/bash_completion.d/asdf
