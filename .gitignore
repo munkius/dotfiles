@@ -1,5 +1,5 @@
 **/*local.symlink
-zsh/localrc.symlink
+common/zsh/localrc.symlink
 
 /node_modules
 **/Brewfile.lock.json
