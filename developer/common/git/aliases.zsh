@@ -15,6 +15,20 @@ alias gp='git push origin HEAD'
 alias gd='git diff --color | sed "s/^\([^-+ ]*\)[-+ ]/\\1/" | less -r'
 
 alias gbd='git branch --merged | grep -v "\*" | grep -v "master" | xargs -n 1 git branch -d; git remote prune origin'
+# gwd — gbd's worktree sibling: remove worktrees whose branch is already merged
+# into master, delete the now-safe branch, then prune stale worktree entries.
+# Dirty worktrees and the main worktree are skipped (git refuses to remove them).
+gwd() {
+  git rev-parse --git-dir >/dev/null 2>&1 || { echo "gwd: not a git repository" >&2; return 1; }
+  git worktree list --porcelain | awk '/^worktree /{w=$2} /^branch /{print w"\t"$2}' | \
+    while IFS=$'\t' read -r wt ref; do
+      br=${ref#refs/heads/}
+      [[ "$br" == "master" || "$br" == "main" ]] && continue
+      git merge-base --is-ancestor "$ref" master 2>/dev/null && \
+        git worktree remove "$wt" && git branch -d "$br"
+    done
+  git worktree prune
+}
 alias gc='git commit'
 alias gca='git commit -a'
 alias gcm='git checkout master'
