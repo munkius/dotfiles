@@ -16,18 +16,28 @@ alias gd='git diff --color | sed "s/^\([^-+ ]*\)[-+ ]/\\1/" | less -r'
 
 alias gbd='git branch --merged | grep -v "\*" | grep -v "master" | xargs -n 1 git branch -d; git remote prune origin'
 # gwd — gbd's worktree sibling: remove worktrees whose branch is already merged
-# into master, delete the now-safe branch, then prune stale worktree entries.
-# Dirty worktrees and the main worktree are skipped (git refuses to remove them).
+# into master, delete the now-safe branch, then prune. The worktree dir is
+# renamed aside (O(1) same-filesystem rename) and the actual `rm -rf` runs in the
+# background, so a multi-GB node_modules doesn't block the shell for minutes.
+# Worktrees with uncommitted/untracked changes are skipped (mirrors `git worktree
+# remove`), as are the master/main worktrees.
 gwd() {
   git rev-parse --git-dir >/dev/null 2>&1 || { echo "gwd: not a git repository" >&2; return 1; }
   git worktree list --porcelain | awk '/^worktree /{w=$2} /^branch /{print w"\t"$2}' | \
     while IFS=$'\t' read -r wt ref; do
       br=${ref#refs/heads/}
       [[ "$br" == "master" || "$br" == "main" ]] && continue
-      git merge-base --is-ancestor "$ref" master 2>/dev/null && \
-        git worktree remove "$wt" && git branch -d "$br"
+      git merge-base --is-ancestor "$ref" master 2>/dev/null || continue
+      if [[ -n "$(git -C "$wt" status --porcelain 2>/dev/null)" ]]; then
+        echo "gwd: skipping $wt (uncommitted changes)" >&2
+        continue
+      fi
+      trash="${wt}.gwd-del.$$"
+      if mv "$wt" "$trash" 2>/dev/null; then
+        git worktree prune && git branch -d "$br"
+        rm -rf "$trash" &!   # background delete; shell returns immediately
+      fi
     done
-  git worktree prune
 }
 alias gc='git commit'
 alias gca='git commit -a'
