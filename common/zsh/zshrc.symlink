@@ -69,3 +69,6 @@ export PATH="$HOME/.local/bin:$PATH"
 # direnv — auto-load .envrc per directory
 eval "$(direnv hook zsh)"
 export PATH=$PATH:$HOME/.maestro/bin
+
+# NIA-863 - mise dev-tool version manager (added by scripts/welcome.mjs)
+eval "$(mise activate zsh)"
