@@ -1,10 +1,9 @@
 # This will install a default Elixir version for you.
 
 function install_default_elixir () {
-  local default_version="1.8"
+  local default_version="latest"
 
-  asdf plugin-add elixir https://github.com/asdf-vm/asdf-elixir.git
-  asdf install elixir "$default_version"
+  mise use --global "elixir@$default_version"
 }
 
 function install_vscode_extensions() {
