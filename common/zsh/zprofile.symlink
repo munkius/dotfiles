@@ -1,0 +1,11 @@
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+# MacPorts Installer addition on 2026-03-03_at_21:11:00: adding an appropriate PATH variable for use with MacPorts.
+export PATH="/opt/local/bin:/opt/local/sbin:$PATH"
+# Finished adapting your PATH environment variable for use with MacPorts.
+
+# mise shims for login shells that never become interactive (Claude Code's Bash tool, git hooks,
+# scripts). `mise activate zsh` in zshrc only sets PATH from a prompt hook, so those shells got
+# Homebrew's node (26) instead of the project pin (24), and a `brew upgrade node` crashed every
+# node they had running. Last, so the shims win over Homebrew and MacPorts.
+eval "$(mise activate zsh --shims)"
