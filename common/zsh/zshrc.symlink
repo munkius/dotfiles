@@ -72,3 +72,22 @@ export PATH=$PATH:$HOME/.maestro/bin
 
 # NIA-863 - mise dev-tool version manager (added by scripts/welcome.mjs)
 eval "$(mise activate zsh)"
+
+# npm takes its global prefix from node's REAL path (installs/node/24.16.0), while mise since
+# 2026.4.16 puts the version alias on PATH (installs/node/24/bin). The two never match, so
+# `npm doctor` says "Add .../24.16.0/bin to your $PATH". Point npm at the node PATH resolves to.
+# Registered after mise's own hooks, so it runs after mise has switched node for this directory.
+_npm_prefix_follows_mise() {
+  local node_bin
+  node_bin=$(whence -p node) && export NPM_CONFIG_PREFIX="${node_bin:h:h}"
+}
+precmd_functions+=(_npm_prefix_follows_mise)
+chpwd_functions+=(_npm_prefix_follows_mise)
+
+# mise's shims FIRST, and keep them there. zprofile puts them last-wins, but zshrc runs after it
+# (_path.zsh prepends /usr/local/bin, `mise activate` places its install dirs behind what it sees
+# as user paths), and a shell that never draws a prompt (Claude Code's Bash tool, hooks, scripts)
+# keeps that order. Measured 2026-11-06: /opt/homebrew/bin and mise's global node 26 came before
+# the shims, so `npm` was Homebrew's 11.20 in a repo that pins 12.2.1. A shim asks mise per
+# directory, so it is right in every shell. Must stay the LAST line that touches PATH.
+path=("$HOME/.local/share/mise/shims" ${path:#$HOME/.local/share/mise/shims})
