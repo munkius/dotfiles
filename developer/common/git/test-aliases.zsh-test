@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # Tests for gbd / gwd in aliases.zsh. Builds a throwaway repo with a bare origin;
-# `gh` is hidden from PATH, so rule 2 (merged PR) is off. Run: zsh test-aliases.zsh
+# `gh` is hidden from PATH, so rule 2 (merged PR) is off. Run: zsh test-aliases.zsh-test (not .zsh: zshrc sources every *.zsh at startup)
 here=${0:A:h}
 tmp=$(mktemp -d) || exit 1; tmp=${tmp:A}
 trap 'rm -rf "$tmp"' EXIT
