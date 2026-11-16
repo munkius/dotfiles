@@ -20,21 +20,53 @@ alias gd='git diff --color | sed "s/^\([^-+ ]*\)[-+ ]/\\1/" | less -r'
 # CLOSED without merging also loses its remote branch, and the old `-D` on [gone]
 # deleted that unmerged work. A branch has landed when ONE of these holds:
 #   1. its tip is an ancestor of origin's default branch (classic merge, ff);
-#   2. GitHub has a MERGED PR for it (into ANY base, so epic/stacked merges count)
-#      and the local tip is that PR's head, or every local commit is on origin, or
-#      the local tip is older than the merge (pre-squash / pre-rebase originals);
-#   3. backup branches (backup/*, *-backup*, *-bak*, *-pre-*): every commit is on
-#      origin, or the branch they back up has landed by rule 2.
+#   2. GitHub has a MERGED PR with the SAME head name (into ANY base, so epic/stacked
+#      merges count) and the local tip is that PR's head, or every local commit is on
+#      origin, or the local tip is older than the merge (pre-squash / pre-rebase
+#      originals);
+#   3. backup branches (backup/*, backup-*, *-backup*, *-bak*, *-pre-*): every commit
+#      is on origin, or the branch they back up has landed. The original is derived
+#      from the name both as-is and with the first `-` after a known prefix (feature,
+#      fix, ...) turned back into `/`, because `mynia squash` writes
+#      backup/<branch with every / replaced by ->-pre-squash-<stamp>. A name such as
+#      backup-2376 has no original to find: only "every commit on origin" releases it;
+#   4. `git cherry` lists no `+` line: every commit is in the default branch by
+#      content (rebases, cherry-picks). Squashed branches are NOT landed by any other
+#      heuristic.
 # Unpushed work that matches none of these is KEPT and listed, never deleted.
-# Needs `gh` for rule 2; without it only rule 1 (and 3 via origin) apply.
+# Needs `gh` for rule 2; without it rules 1, 3 (via origin or a local original) and 4
+# still apply. gwd treats a worktree whose only uncommitted change is package-lock.json
+# as clean (an `npm install` at session start rewrites it).
 # Both take -n for a dry run.
 
 # merged PRs of this repo: headRefName \t headRefOid \t mergedAt (epoch)
 _git_merged_prs() {
   command -v gh >/dev/null 2>&1 || return 0
-  gh pr list --state merged --limit 3000 \
+  gh pr list --state merged --limit 10000 \
     --json headRefName,headRefOid,mergedAt \
     --jq '.[] | "\(.headRefName)\t\(.headRefOid)\t\(.mergedAt | fromdateiso8601)"' 2>/dev/null
+}
+
+# _git_content_landed <branch> <default-ref>: ancestor of base, or no `+` in git cherry
+_git_content_landed() {
+  local tip
+  tip=$(git rev-parse -q --verify "refs/heads/$1") || return 1
+  git merge-base --is-ancestor "$tip" "$2" 2>/dev/null && { _GIT_WHY="in ${2#origin/}"; return 0; }
+  git cherry "$2" "$tip" 2>/dev/null | grep -q '^+' && return 1
+  _GIT_WHY="every commit is in ${2#origin/} by content"
+  return 0
+}
+
+# _git_backup_originals <backup-branch>: candidate names of the branch it backs up
+_git_backup_originals() {
+  local orig=$1 p
+  orig=${orig#backup/}; orig=${orig#backup-}
+  orig=${orig%%-backup*}; orig=${orig%%-bak*}; orig=${orig%%-pre-*}
+  [[ -n "$orig" && "$orig" != <-> ]] || return 0
+  print -r -- "$orig"
+  for p in feature fix feat chore docs refactor test claude munkius worktree nia; do
+    [[ "$orig" == $p-* ]] && { print -r -- "$p/${orig#$p-}"; break; }
+  done
 }
 
 # _git_landed <branch> <default-ref> ; reads the PR table from $_GIT_PRS
@@ -51,11 +83,14 @@ _git_landed() {
     [[ "$tip" == "$oid" || "$off" == "0" || "$tdate" -le "$merged" ]]
   }
   if _git_pr_landed "$br"; then _GIT_WHY="PR merged"; return 0; fi
-  if [[ "$br" == backup/* || "$br" == *-backup* || "$br" == *-bak* || "$br" == *-pre-* ]]; then
+  if [[ "$br" == backup/* || "$br" == backup-* || "$br" == *-backup* || "$br" == *-bak* || "$br" == *-pre-* ]]; then
     [[ "$off" == "0" ]] && { _GIT_WHY="backup, all on origin"; return 0; }
-    orig=${br#backup/}; orig=${orig%%-backup*}; orig=${orig%%-bak*}; orig=${orig%%-pre-*}
-    _git_pr_landed "$orig" && { _GIT_WHY="backup of landed $orig"; return 0; }
+    for orig in ${(f)"$(_git_backup_originals "$br")"}; do
+      _git_pr_landed "$orig" && { _GIT_WHY="backup of landed $orig"; return 0; }
+      if _git_content_landed "$orig" "$base"; then _GIT_WHY="backup of landed $orig"; return 0; fi
+    done
   fi
+  if _git_content_landed "$br" "$base"; then return 0; fi
   return 1
 }
 
@@ -105,7 +140,8 @@ gwd() {
     # a locked worktree belongs to a live session (claude -w / nwt): never touch it
     [[ "$lock" == locked ]] && { echo "gwd: keep  $wt (locked by a session)" >&2; continue; }
     [[ -d "$wt" ]] || continue
-    if [[ -n "$(git -C "$wt" status --porcelain -uno 2>/dev/null)" ]]; then
+    # package-lock.json alone does not count: an `npm install` rewrites it
+    if [[ -n "$(git -C "$wt" status --porcelain -uno 2>/dev/null | grep -Ev '^.. (.*/)?package-lock\.json$')" ]]; then
       echo "gwd: keep  $wt (uncommitted changes)" >&2; continue
     fi
     br=${ref#refs/heads/}

@@ -1,0 +1,85 @@
+#!/usr/bin/env zsh
+# Tests for gbd / gwd in aliases.zsh. Builds a throwaway repo with a bare origin;
+# `gh` is hidden from PATH, so rule 2 (merged PR) is off. Run: zsh test-aliases.zsh
+here=${0:A:h}
+tmp=$(mktemp -d) || exit 1; tmp=${tmp:A}
+trap 'rm -rf "$tmp"' EXIT
+export HOME=$tmp GIT_CONFIG_GLOBAL=/dev/null GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@t
+# a PATH without gh (and without hub, so `git` stays plain)
+mkdir "$tmp/bin"; for t in git awk sort tail grep sed mv rm dirname mktemp; do ln -s "$(command -v $t)" "$tmp/bin/$t" 2>/dev/null; done
+PATH="$tmp/bin:/bin:/usr/bin"
+source "$here/aliases.zsh"
+(( $+commands[gh] )) && { echo "gh still on PATH" >&2; exit 1; }
+
+fails=0
+ok() { print -r -- "ok    $1"; }
+bad() { print -r -- "FAIL  $1"; fails=$((fails+1)); }
+expect_deleted() { print -r -- "$out" | grep -q "would delete  $1 " && ok "$2" || bad "$2"; }
+expect_kept() { print -r -- "$out" | grep -q "would delete  $1 " && bad "$2" || ok "$2"; }
+
+git init -q --bare "$tmp/origin.git"
+git clone -q "$tmp/origin.git" "$tmp/work" 2>/dev/null
+cd "$tmp/work"; git checkout -q -b master
+echo base > f; git add f; git commit -qm base; git push -q -u origin master
+git remote set-head origin master >/dev/null
+
+mk() { git checkout -q -b "$1" master; echo "$1" > "$1.txt" 2>/dev/null || { mkdir -p ${1:h}; echo "$1" > "$1.txt"; }; git add -A; git commit -qm "$1"; }
+
+# rule 1: merged by fast-forward
+mk ff-merged; git checkout -q master; git merge -q --ff-only ff-merged; git push -q origin master
+# rule 4: rebased (same content, other sha) onto master
+git checkout -q master; mk rebased; git checkout -q master
+echo up > up.txt; git add up.txt; git commit -qm up
+git cherry-pick rebased >/dev/null; git push -q origin master
+# rule 4 must NOT fire for work that is not in master
+mk unlanded
+# unlanded squash-like: a branch with two commits of which one is in master
+git checkout -q master; git checkout -q -b half; echo h1 > h1.txt; git add h1.txt; git commit -qm h1
+git cherry-pick rebased >/dev/null 2>&1 || true
+git checkout -q master
+# rule 3: backup name as written by `mynia squash`
+git checkout -q master; git checkout -q -b feature/nia-1-thing; echo t > t.txt; git add t.txt; git commit -qm t
+git branch backup/feature-nia-1-thing-pre-squash-20261110-135301 feature/nia-1-thing
+git checkout -q master; git cherry-pick feature/nia-1-thing >/dev/null; git push -q origin master
+git branch -D feature/nia-1-thing -q 2>/dev/null
+# original gone, still present: landed original stays locally for the other backup
+git checkout -q -b fix/gone-1; echo g > g.txt; git add g.txt; git commit -qm g
+git branch backup/fix-gone-1-pre-squash-1 fix/gone-1
+git checkout -q master; git cherry-pick fix/gone-1 >/dev/null; git push -q origin master
+# rule 3 proper: the backup carries an extra unpushed commit, so only its landed original releases it
+git checkout -q -b fix/orig-2; echo a > a2.txt; git add a2.txt; git commit -qm a2
+git checkout -q -b backup/fix-orig-2-pre-squash-3; echo extra > extra.txt; git add extra.txt; git commit -qm extra
+git checkout -q master; git cherry-pick fix/orig-2 >/dev/null; git push -q origin master
+# backup-<digits>: unpushed, no original -> kept; pushed -> released
+git checkout -q -b backup-2376; echo b > b.txt; git add b.txt; git commit -qm b; git checkout -q master
+git checkout -q -b backup-2384-rebased; echo c > c.txt; git add c.txt; git commit -qm c; git push -q origin backup-2384-rebased; git checkout -q master
+# unlanded backup of unlanded original
+git checkout -q -b feature/open; echo o > o.txt; git add o.txt; git commit -qm o
+git branch backup/feature-open-pre-squash-2 feature/open; git checkout -q master
+
+out=$(gbd -n 2>&1)
+expect_deleted ff-merged "rule 1: fast-forward merged is deleted"
+expect_deleted rebased "rule 4: rebased/cherry-picked is deleted"
+expect_kept unlanded "unlanded work is kept"
+expect_kept half "partly landed work is kept"
+expect_deleted 'backup\/feature-nia-1-thing-pre-squash-20261110-135301' "rule 3: backup maps back with / restored (original already deleted: lands by content)"
+expect_deleted 'backup\/fix-gone-1-pre-squash-1' "rule 3: backup of a landed original is deleted"
+expect_deleted 'backup\/fix-orig-2-pre-squash-3' "rule 3: backup with extra commits goes with its landed original"
+expect_kept backup-2376 "backup-<digits>, unpushed: kept"
+expect_deleted backup-2384-rebased "backup-* with all commits on origin: deleted"
+expect_kept 'backup\/feature-open-pre-squash-2' "backup of unlanded original: kept"
+expect_kept feature/open "unlanded original: kept"
+
+# gwd: package-lock.json only is clean; other changes are kept
+git checkout -q master
+echo l > package-lock.json; git add package-lock.json; git commit -qm lock; git push -q origin master
+git worktree add -q "$tmp/wt-lock" -b wt-lock master 2>/dev/null
+git worktree add -q "$tmp/wt-dirty" -b wt-dirty master 2>/dev/null
+echo changed >> "$tmp/wt-lock/package-lock.json"
+echo changed >> "$tmp/wt-dirty/package-lock.json"; echo changed >> "$tmp/wt-dirty/f"
+out=$(gwd -n 2>&1)
+print -r -- "$out" | grep -q "would remove  $tmp/wt-lock " && ok "gwd: package-lock.json only counts as clean" || bad "gwd: package-lock.json only counts as clean"
+print -r -- "$out" | grep -q "keep  $tmp/wt-dirty (uncommitted" && ok "gwd: other changes keep the worktree" || bad "gwd: other changes keep the worktree"
+
+(( fails )) && { echo "$fails failure(s)"; exit 1; }
+echo "all passed"
